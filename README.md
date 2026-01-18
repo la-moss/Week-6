@@ -44,7 +44,7 @@ Guardrails may fail until the incident is resolved. Expected failure strings inc
 - `guardrail unmet: telemetry missing`
 
 ```bash
-python3 scripts/guardrails/run.py --cloud azure --topic security --iac terraform --level senior --root senior/terraform
+python3 scripts/guardrails/run.py --cloud azure --topic security --iac terraform --level senior --root senior/terraform --guardrails guardrails.json
 ```
 
 ## What to submit

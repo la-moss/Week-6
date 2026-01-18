@@ -1,4 +1,5 @@
 #!/usr/bin/env python3
+from __future__ import annotations
 import argparse
 import io
 import json
@@ -39,6 +40,7 @@ def select_guardrails(all_gr: list[dict], *, topic: str, iac: str, level: str) -
     allowlist = None
     if topic.lower() == "security" and iac.lower() == "terraform" and level.lower() == "senior":
         allowlist = {
+            "gr-networking-terraform-links",
             "gr-security-terraform-lpv",
             "gr-cost-tags-fullset-terraform",
             "gr-observability-terraform-telemetry",
@@ -90,8 +92,40 @@ def main() -> int:
         rc, out = _run_embedded_python(code, env=env)
         out = out.strip()
         if out:
+            # De-duplicate consecutive repeated lines for cleaner output.
+            cleaned_lines = []
+            prev = None
+            issue_line = None
+            for line in out.splitlines():
+                normalized = line.lstrip()
+                if normalized.startswith("issues:"):
+                    issue_line = normalized
+                    continue
+                if line == prev:
+                    continue
+                cleaned_lines.append(line)
+                prev = line
+            if issue_line:
+                # Keep only non-zero issue flags and format on separate lines.
+                issue_lines = []
+                if issue_line.startswith("issues:"):
+                    raw_items = [item.strip() for item in issue_line[len("issues:"):].split(",")]
+                    kept = []
+                    for item in raw_items:
+                        if "=" not in item:
+                            continue
+                        key, value = [part.strip() for part in item.split("=", 1)]
+                        if value in {"0", "0.0", "false", "False"}:
+                            continue
+                        kept.append(f"{key}={value}")
+                    if kept:
+                        issue_lines.append("issues:")
+                        issue_lines.extend(f"- {item}" for item in kept)
+                if not issue_lines:
+                    issue_lines = [issue_line]
+                cleaned_lines.extend(issue_lines)
             print(f"[{gid}]")
-            print(out)
+            print("\n".join(cleaned_lines))
         if rc != 0:
             overall_rc = 1
 
