@@ -1,0 +1,28 @@
+name: terraform-ci
+on: [push]
+
+jobs:
+  tf:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: hashicorp/setup-terraform@v3
+        with:
+          terraform_version: 1.6.6
+
+      - name: Terraform fmt
+        run: terraform -chdir=senior/terraform fmt -check -recursive
+
+      - name: Terraform init
+        run: terraform -chdir=senior/terraform init -backend=false
+
+      - name: Terraform validate
+        run: terraform -chdir=senior/terraform validate
+
+      - name: Guardrails
+        run: |
+          python3 -m venv .venv
+          . .venv/bin/activate
+          pip install -r requirements.txt
+          python3 scripts/guardrails/run.py --cloud azure --topic security --iac terraform --level senior --root senior/terraform
