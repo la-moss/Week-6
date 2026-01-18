@@ -1,4 +1,4 @@
-# Azure Senior Security Incident Lab (Terraform)
+# Azure Security Incident Lab (Terraform)
 
 This repo is a hands-on incident-style lab focused on Azure security posture and governance using Terraform.
 
